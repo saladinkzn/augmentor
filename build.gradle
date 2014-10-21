@@ -3,6 +3,7 @@ def rootProject = project
 group = 'ru.shadam.augmentor'
 version = '0.1-SNAPSHOT'
 
+// Building
 project(':libs:augmentor') {
 	group = rootProject.group
 	version = rootProject.version
@@ -22,14 +23,17 @@ project(':libs:augmentor') {
 		compile gradleApi()
 		compile localGroovy()
 	}
+}
 
-  publishing {
-    publications {
-      mavenJava(MavenPublication) {
-        from components.java
-      }
-    }
-  }
+// Publishing
+project(':libs:augmentor') {
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				from components.java
+			}
+		}
+	}
 	
 	project.tasks.build.finalizedBy project.tasks.publishToMavenLocal
 }
