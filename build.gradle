@@ -1,7 +1,27 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.4'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1'
+  }
+}
+
 def rootProject = project
+
+// Configuring properties for future use
+ext {
+  project_website = "https://github.com/${developerId}/${projectId}"
+  project_scm = "scm:git@github.com:${developerId}/${projectId}.git"
+  license_url = "https://raw.github.com/${developerId}/${projectId}/master/LICENSE"
+}
 
 group = 'ru.shadam.augmentor'
 version = '0.1-SNAPSHOT'
+
+
 
 // Building
 project(':libs:augmentor') {
@@ -9,7 +29,7 @@ project(':libs:augmentor') {
 	version = rootProject.version
 	
 	apply plugin: 'groovy'
-	apply plugin: 'maven-publish'
+	
 	
 	sourceCompatibility = '1.7'
 	targetCompatibility = '1.7'
@@ -25,17 +45,107 @@ project(':libs:augmentor') {
 	}
 }
 
-// Publishing
+// Publishing & Publishing to local
 project(':libs:augmentor') {
+	apply plugin: 'maven-publish'
+	
+	task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates sources jar') {
+		classifier = 'sources'
+		from sourceSets.main.allSource
+	}
+
+	task javadocJar(type: Jar, description: 'Creates javadoc jar') {
+		dependsOn javadoc
+		classifier = 'javadoc'
+		from javadoc.destinationDir
+		if(tasks.findByName('groovydoc')) {
+		  dependsOn groovydoc
+		  from groovydoc.destinationDir
+		}
+	}
+
+	artifacts {
+		archives sourcesJar, javadocJar
+	}
+	
 	publishing {
 		publications {
 			mavenJava(MavenPublication) {
+				pom.withXml {
+					asNode().with {
+						appendNode('name', rootProject.name)
+						appendNode('packaging', 'jar')
+						appendNode('description', rootProject.description)
+						appendNode('url', rootProject.project_website)
+						appendNode('scm').with {
+							appendNode('url', rootProject.project_scm)
+							appendNode('connection', rootProject.project_scm)
+							appendNode('developerConnection', rootProject.project_scm)
+						}
+						appendNode('licenses').with {
+							appendNode('license').with {
+								appendNode('name', rootProject.license)
+								appendNode('url', rootProject.license_url)
+								appendNode('distribution', 'repo')
+							}
+						}
+						appendNode('developers').with {
+							appendNode('developer').with {
+								appendNode('id', rootProject.developerId)
+								appendNode('name', rootProject.developerName)
+							}
+						}
+						it
+					}
+				}
+
 				from components.java
+
+				artifact sourcesJar {
+					classifier 'sources'
+				}
+
+				artifact javadocJar {
+					classifier "javadoc"
+				}
 			}
 		}
 	}
 	
 	project.tasks.build.finalizedBy project.tasks.publishToMavenLocal
+}
+
+
+project(':libs:augmentor') {
+	apply plugin: 'com.jfrog.artifactory'
+	
+	// oss.jfrog.org artifactory repository
+	def bintrayUser = project.hasProperty('bintrayUser') ? project.bintrayUser : ''
+	def bintrayKey = project.hasProperty('bintrayKey') ? project.bintrayKey : ''
+	
+	println "bintrayUser: $bintrayUser, bintrayKey: $bintrayKey"
+
+	artifactory {
+	  contextUrl = 'https://oss.jfrog.org/artifactory'
+	  publish {
+		repository {
+		  if (project.version.endsWith('-SNAPSHOT'))
+			repoKey = 'oss-snapshot-local'
+		  else
+			repoKey = 'oss-release-local'
+		  username = bintrayUser
+		  password = bintrayKey
+		}
+		defaults {
+		  publications 'mavenJava'
+		}
+	  }
+	  resolve {
+		repository {
+		  repoKey = 'repo'
+		}
+	  }
+	}
 }
 
 task wrapper(type: Wrapper) {
