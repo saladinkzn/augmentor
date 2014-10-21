@@ -1,0 +1,39 @@
+def rootProject = project
+
+group = 'ru.shadam.augmentor'
+version = '0.1-SNAPSHOT'
+
+project(':libs:augmentor') {
+	group = rootProject.group
+	version = rootProject.version
+	
+	apply plugin: 'groovy'
+	apply plugin: 'maven-publish'
+	
+	sourceCompatibility = '1.7'
+	targetCompatibility = '1.7'
+	
+	repositories {
+		mavenLocal()
+		jcenter()
+	}
+	
+	dependencies {
+		compile gradleApi()
+		compile localGroovy()
+	}
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+      }
+    }
+  }
+	
+	project.tasks.build.finalizedBy project.tasks.publishToMavenLocal
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.1'
+}
