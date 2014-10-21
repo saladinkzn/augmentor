@@ -16,7 +16,7 @@ buildscript {
 	}
 
 	dependencies {
-        classpath 'ru.shadam.augmentor:augmentor:0.1-SNAPSHOT
+        classpath 'ru.shadam.augmentor:augmentor:0.1-SNAPSHOT'
 	}
 }
 ```
