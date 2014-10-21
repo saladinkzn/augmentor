@@ -8,14 +8,25 @@ It can be useful if you develop project like Java library or Android application
 
 Getting started
 ------------------
-TBD: Will be updated when lib will be published to jfrog/bintray
+Add following snippet to enable creation of AugmentorTask
+```groovy
+buildscript {
+	repositories {
+        maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+	}
+
+	dependencies {
+        classpath 'ru.shadam.augmentor:augmentor:0.1-SNAPSHOT
+	}
+}
+```
 
 Usage
 ------------------
 Add following snippet into your build.gradle:
 
 ```groovy
-task re-build(type: ru.shadam.augmentor.Augmentor) {
+task re-build(type: ru.shadam.augmentor.AugmentorTask) {
 	innerTask = 'build'
 }
 ```
