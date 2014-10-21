@@ -15,13 +15,14 @@ class AugmentorTask extends DefaultTask {
     // TODO: gradle version check
 
     def cancellationTokenSource = runTask()
+    println 'Press any key to re-run task or \'q\' or \'Q\' to stop'
     infinite:
     while (true) {
       while (System.in.available() > 0) {
         def input = System.in.read()
 
         if (input >= 0) {
-          char c = (char) input
+          char c = input as char
           if (c == 'q' || c == 'Q') {
             break infinite
           } else {
@@ -43,9 +44,6 @@ class AugmentorTask extends DefaultTask {
         }
       }
       Thread.sleep(500)
-
-      println 'Press any key to continue'
-      System.in.read()
     }
   }
 
