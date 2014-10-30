@@ -18,11 +18,6 @@ ext {
   license_url = "https://raw.github.com/${developerId}/${projectId}/master/LICENSE"
 }
 
-group = 'ru.shadam.augmentor'
-version = '0.1-SNAPSHOT'
-
-
-
 // Building
 project(':libs:augmentor') {
 	group = rootProject.group

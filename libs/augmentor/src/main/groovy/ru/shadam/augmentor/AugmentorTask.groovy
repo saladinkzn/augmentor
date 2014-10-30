@@ -3,11 +3,16 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import org.gradle.tooling.*
+
+import java.nio.file.Path
+
 /**
  * @author sala
  */
 class AugmentorTask extends DefaultTask {
   String innerTask
+  int scanInterval
+  List<File> scanDirs
   volatile boolean finished = true
 
   @TaskAction
@@ -16,6 +21,26 @@ class AugmentorTask extends DefaultTask {
 
     def cancellationTokenSource = runTask()
     println 'Press any key to re-run task or \'q\' or \'Q\' to stop'
+    ScannerManager scannerManager = null
+    if(scanInterval) {
+      def list = [] as List<Path>
+      def dirsToScan
+      if(scanDirs) {
+        dirsToScan = scanDirs.collect { it.toPath() }
+      } else {
+        dirsToScan = ProjectUtils.getSourcePaths(project).collect { it.toPath() }
+      }
+      list.addAll(dirsToScan)
+      scannerManager = new ScannerManager(list, { ScannerManager.EventData ed ->
+        cancellationTokenSource.cancel()
+        println 'Waiting for task finish'
+        while (!finished) {
+          Thread.sleep(10)
+        }
+        cancellationTokenSource = owner.runTask()
+      })
+      scannerManager.start()
+    }
     infinite:
     while (true) {
       while (System.in.available() > 0) {
@@ -45,6 +70,7 @@ class AugmentorTask extends DefaultTask {
       }
       Thread.sleep(500)
     }
+    scannerManager?.stop()
   }
 
 
@@ -55,7 +81,7 @@ class AugmentorTask extends DefaultTask {
             .connect()
   }
 
-  private CancellationTokenSource runTask() {
+  protected CancellationTokenSource runTask() {
 
     if(!finished) {
       throw new IllegalStateException("Trying to simultaneously start 2 tasks")
