@@ -27,7 +27,10 @@ Add following snippet into your build.gradle:
 
 ```groovy
 task re-build(type: ru.shadam.augmentor.AugmentorTask) {
-	innerTask = 'build'
+	innerTask = 'build' // name of gradle augmentor task
+	// Optional parameters:
+	scanInterval = 10 // watch interval, 0 to disable
+	srcDirs = [ file('src/main/java') ] // list of directories to watch, project.sourceSets.main by default
 }
 ```
 

@@ -7,6 +7,6 @@ import org.gradle.api.Project
  */
 class ProjectUtils {
   static Collection<File> getSourcePaths(Project project) {
-    project.sourceSets.main.allSource.srcDirs
+    return project.sourceSets.main.allSource.srcDirs
   }
 }

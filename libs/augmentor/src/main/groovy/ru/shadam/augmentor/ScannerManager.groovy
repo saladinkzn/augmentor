@@ -39,6 +39,8 @@ class ScannerManager {
 
   volatile boolean stopped
   WatchService watchService
+  //
+  int scanInterval
   Closure<EventData> callback
 
   ScannerManager(List<Path> paths, Closure<EventData> callback) {
@@ -53,7 +55,7 @@ class ScannerManager {
     stopped = false
     Thread.start {
       while (!stopped) {
-        WatchKey key = watchService.poll(15, TimeUnit.SECONDS)
+        WatchKey key = watchService.poll(scanInterval, TimeUnit.SECONDS)
         if(key != null) {
           def events = key.pollEvents()
           def createdOrModified = []

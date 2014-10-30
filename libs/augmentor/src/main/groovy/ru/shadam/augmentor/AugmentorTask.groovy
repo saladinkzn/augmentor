@@ -30,16 +30,21 @@ class AugmentorTask extends DefaultTask {
       } else {
         dirsToScan = ProjectUtils.getSourcePaths(project).collect { it.toPath() }
       }
-      list.addAll(dirsToScan)
-      scannerManager = new ScannerManager(list, { ScannerManager.EventData ed ->
-        cancellationTokenSource.cancel()
-        println 'Waiting for task finish'
-        while (!finished) {
-          Thread.sleep(10)
-        }
-        cancellationTokenSource = owner.runTask()
-      })
-      scannerManager.start()
+      if(dirsToScan == null) {
+        logger.warn("Cannot resolve dirsToScan. Your projects neither specify sourceSets not provide srcDirs proprety")
+      } else {
+        list.addAll(dirsToScan)
+        scannerManager = new ScannerManager(list, { ScannerManager.EventData ed ->
+          cancellationTokenSource.cancel()
+          println 'Waiting for task finish'
+          while (!finished) {
+            Thread.sleep(10)
+          }
+          cancellationTokenSource = owner.runTask()
+        })
+        scannerManager.scanInterval = scanInterval
+        scannerManager.start()
+      }
     }
     infinite:
     while (true) {
