@@ -7,6 +7,10 @@ import org.gradle.api.Project
  */
 class ProjectUtils {
   static Collection<File> getSourcePaths(Project project) {
-    return project.sourceSets.main.allSource.srcDirs
+    if(project.hasProperty('sourceSets')) {
+      return project.sourceSets.main.allSource.srcDirs
+    } else {
+      return null
+    }
   }
 }

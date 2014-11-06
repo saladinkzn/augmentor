@@ -1,5 +1,8 @@
 package ru.shadam.augmentor
 
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
+
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.TimeUnit
@@ -12,6 +15,8 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
  * @author sala
  */
 class ScannerManager {
+  private static final Logger logger = Logging.getLogger(ScannerManager)
+
   static class EventData {
     List<Path> createdOrModified
     List<Path> deleted
@@ -37,8 +42,11 @@ class ScannerManager {
     }
   }
 
-  volatile boolean stopped
-  WatchService watchService
+  protected volatile boolean stopped
+  protected WatchService watchService
+  //
+  protected def createdOrModified = []
+  protected def deleted = []
   //
   int scanInterval
   Closure<EventData> callback
@@ -54,12 +62,11 @@ class ScannerManager {
   def start() {
     stopped = false
     Thread.start {
+      logger.debug 'ScannerManager started'
       while (!stopped) {
-        WatchKey key = watchService.poll(scanInterval, TimeUnit.SECONDS)
+        WatchKey key = watchService.poll(1, TimeUnit.SECONDS)
         if(key != null) {
           def events = key.pollEvents()
-          def createdOrModified = []
-          def deleted = []
           events.each {
             if (it.kind() == ENTRY_CREATE) {
               Path parentPath = (Path)key.watchable()
@@ -82,11 +89,45 @@ class ScannerManager {
               deleted.add(resolved)
             }
           }
-          callback.call(new EventData(createdOrModified, deleted))
           key.reset()
+          if(createdOrModified || deleted) {
+            raiseEvent()
+          }
         }
       }
+      logger.debug 'ScannerManager stopped'
     }
+  }
+
+  protected def raiseEvent() {
+    if(throttle()) {
+      createdOrModified = []
+      deleted = []
+      callback.call(new EventData(createdOrModified, deleted))
+    }
+  }
+
+  private Long lastFire
+
+  private boolean throttle() {
+    logger.debug('throttle() called')
+    if(scanInterval == 0) {
+      // In this case, event is fired on each file changed
+      logger.debug('scanInterval == 0, no throttling')
+      return true
+    }
+    if(lastFire == null) {
+      logger.debug('lastFire == null, first call, no throttling')
+      lastFire = System.currentTimeMillis()
+      return true
+    }
+    if((System.currentTimeMillis() - lastFire) / 1000 > scanInterval) {
+      logger.debug("lastFire: ${lastFire}, now: ${System.currentTimeMillis()}. Event fired. ")
+      lastFire = System.currentTimeMillis()
+      return true
+    }
+    logger.debug('event was not fired')
+    return false
   }
 
   def stop() {

@@ -11,27 +11,28 @@ import java.nio.file.Path
  */
 class AugmentorTask extends DefaultTask {
   String innerTask
-  int scanInterval
+  int scanInterval = 0
   List<File> scanDirs
   volatile boolean finished = true
 
   @TaskAction
   void augment() {
     // TODO: gradle version check
+    assert innerTask != null, 'innerTask cannot be null'
 
     def cancellationTokenSource = runTask()
     println 'Press any key to re-run task or \'q\' or \'Q\' to stop'
     ScannerManager scannerManager = null
-    if(scanInterval) {
+    if(scanInterval != -1) {
       def list = [] as List<Path>
       def dirsToScan
       if(scanDirs) {
         dirsToScan = scanDirs.collect { it.toPath() }
       } else {
-        dirsToScan = ProjectUtils.getSourcePaths(project).collect { it.toPath() }
+        dirsToScan = ProjectUtils.getSourcePaths(project)?.collect { it.toPath() }
       }
       if(dirsToScan == null) {
-        logger.warn("Cannot resolve dirsToScan. Your projects neither specify sourceSets not provide srcDirs proprety")
+        logger.warn("Cannot resolve dirsToScan. Your task neither specified sourceSets nor provided srcDirs property")
       } else {
         list.addAll(dirsToScan)
         scannerManager = new ScannerManager(list, { ScannerManager.EventData ed ->
