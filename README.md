@@ -29,16 +29,12 @@ Add following snippet into your build.gradle:
 task re-build(type: ru.shadam.augmentor.AugmentorTask) {
 	innerTask = 'build' // name of gradle augmentor task
 	// Optional parameters:
-	scanInterval = 10 // watch interval, 0 to disable
+	scanInterval = 10 // source changed event throttling: -1 to disable watching for source changes, 0 for no throttling, >0 for throttling
 	srcDirs = [ file('src/main/java') ] // list of directories to watch, project.sourceSets.main by default
 }
 ```
 
 Then, you can run this task by executing `gradlew re-build` command.
-
-Future plans
--------------------
-* Recompile and restart on source changes
 
 Copyright and License
 ----------------------
